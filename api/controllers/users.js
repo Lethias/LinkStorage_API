@@ -13,7 +13,7 @@ module.exports = {
             .then(user => {
                 if (user.length >= 1) {
                     return res.status(409).json({
-                        message: "Mail exists"
+                        message: "Mail already exists"
                     });
                 } else {
                     bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -32,7 +32,7 @@ module.exports = {
                                 .then(result => {
                                     console.log(result);
                                     res.status(201).json({
-                                        message: "User created"
+                                        message: "User has been created"
                                     });
                                 })
                                 .catch(err => {
@@ -150,7 +150,7 @@ module.exports = {
                         user.categories.push(category);
                         user.save();
                         res.status(201).json({
-                            message: "Category stored",
+                            message: "Category has been stored",
                             category: category,
                         });
                     }
@@ -167,112 +167,96 @@ module.exports = {
     deleteCategory: (req, res) => {
         const userId = req.userData.userId;
         const categoryId = req.params.categoryId;
-        User.findById(userId)
-            .then(user => {
-                Category.deleteOne({_id: categoryId})
-                    .exec()
-                    .then(result => {
-                        Link.deleteMany({category: categoryId}, function (err) {
-                            console.log(err)
-                        });
-                        user.updateOne({$pull: {categories: categoryId}}, function (err) {
-                            console.log(err)
-                        });
-                        res.status(200).json(result);
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        res.status(500).json({
-                            error: err
-                        });
+        User.find({_id: userId, categories: categoryId})
+            .then(usercheck => {
+                if (usercheck.length < 1) {
+                    return res.status(403).json({
+                        message: "Access denied"
                     });
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(500).json({
-                    error: err
-                });
+                } else {
+                    User.findById(userId)
+                        .then(user => {
+                            Category.deleteOne({_id: categoryId})
+                                .exec()
+                                .then(result => {
+                                    Link.deleteMany({category: categoryId});
+                                    user.updateOne({$pull: {categories: categoryId}});
+                                    res.status(200).json(result);
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                    res.status(500).json({
+                                        error: err
+                                    });
+                                });
+                        })
+                        .catch(err => {
+                            console.log(err);
+                            res.status(500).json({
+                                error: err
+                            });
+                        });
+                }
             });
+
     },
 
     newLink: (req, res) => {
         const userId = req.userData.userId;
-        User.findById(userId)
-            .then(function () {
-                const categoryId = req.params.categoryId;
-                Category.findById(categoryId)
-                    .then(category => {
-                        if (!category) {
-                            return res.status(404).json({
-                                message: "Category not found"
-                            });
-                        }
-                        console.log(category);
-                        const link = new Link({
-                            _id: mongoose.Types.ObjectId(),
-                            link: req.body.link,
-                            linkdescription: req.body.linkdescription,
-                            createdAt: req.body.createdAt,
-                            tags: req.body.tags,
-                            category: category._id
-                        });
-                        link.save(function (err) {
-                            if (err) return res.status(404).json({
-                                message: "Link validation failed"
-                            });
-                            else {
-                                category.links.push(link);
-                                category.save();
-                                res.status(201).json({
-                                    message: "Link stored",
-                                    link: link,
+        const categoryId = req.params.categoryId;
+        User.find({_id: userId, categories: categoryId})
+            .then(usercheck => {
+                if (usercheck.length < 1) {
+                    return res.status(403).json({
+                        message: "Access denied"
+                    });
+                } else {
+                    User.findById(userId)
+                        .then(function () {
+                            Category.findById(categoryId)
+                                .then(category => {
+                                    if (!category) {
+                                        return res.status(404).json({
+                                            message: "Category not found"
+                                        });
+                                    }
+                                    console.log(category);
+                                    const link = new Link({
+                                        _id: mongoose.Types.ObjectId(),
+                                        link: req.body.link,
+                                        linkdescription: req.body.linkdescription,
+                                        createdAt: req.body.createdAt,
+                                        tags: req.body.tags,
+                                        category: category._id
+                                    });
+                                    link.save(function (err) {
+                                        if (err) return res.status(404).json({
+                                            message: "Link validation failed"
+                                        });
+                                        else {
+                                            category.links.push(link);
+                                            category.save();
+                                            res.status(201).json({
+                                                message: "Link stored",
+                                                link: link,
+                                            });
+                                        }
+                                    });
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                    res.status(500).json({
+                                        error: err
+                                    });
                                 });
-                            }
+                        })
+                        .catch(err => {
+                            console.log(err);
+                            res.status(500).json({
+                                error: err
+                            });
                         });
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        res.status(500).json({
-                            error: err
-                        });
-                    });
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(500).json({
-                    error: err
-                });
-            });
-    },
-
-    getLinksByCategory: (req, res) => {
-        const userId = req.userData.userId;
-        User.findById(userId)
-            .then(function () {
-                const categoryId = req.params.categoryId;
-                Category.findById(categoryId)
-                    .populate('links')
-                    .exec()
-                    .then(doc => {
-                        console.log("From Database", doc);
-                        if (doc) {
-                            res.status(200).json(doc.links);
-                        } else {
-                            res
-                                .status(404)
-                                .json({message: "No valid entry found for provided ID"});
-                        }
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        res.status(500).json({error: err});
-                    });
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(500).json({
-                    error: err
-                });
+                }
             });
     },
 
