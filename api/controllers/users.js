@@ -180,7 +180,9 @@ module.exports = {
                                 .exec()
                                 .then(result => {
                                     Link.deleteMany({category: categoryId});
-                                    user.updateOne({$pull: {categories: categoryId}});
+                                    user.updateOne({$pull: {categories: categoryId}}, function (err) {
+                                        console.log(err)
+                                    });
                                     res.status(200).json(result);
                                 })
                                 .catch(err => {
@@ -264,31 +266,39 @@ module.exports = {
         const userId = req.userData.userId;
         const categoryId = req.params.categoryId;
         const linkId = req.params.linkId;
-        User.findById(userId)
-            .then(function () {
-                Category.findById(categoryId)
-                    .then(category =>
-                        Link.deleteOne({_id: linkId})
-                            .exec()
-                            .then(result => {
-                                category.updateOne({$pull: {links: linkId}}, function (err) {
-                                    console.log(err)
-                                });
-                                res.status(200).json(result);
-                            })
-                            .catch(err => {
-                                console.log(err);
-                                res.status(500).json({
-                                    error: err
-                                });
-                            }))
-                    .catch(err => {
-                        console.log(err);
-                        res.status(500).json({
-                            error: err
-                        });
+        User.find({_id: userId, categories: categoryId})
+            .then(usercheck => {
+                if (usercheck.length < 1) {
+                    return res.status(403).json({
+                        message: "Access denied"
                     });
-            })
+                } else {
+                    User.findById(userId)
+                        .then(function () {
+                            Category.findById(categoryId)
+                                .then(category =>
+                                    Link.deleteOne({_id: linkId})
+                                        .exec()
+                                        .then(result => {
+                                            category.updateOne({$pull: {links: linkId}}, function (err) {
+                                                console.log(err)
+                                            });
+                                            res.status(200).json(result);
+                                        })
+                                        .catch(err => {
+                                            console.log(err);
+                                            res.status(500).json({
+                                                error: err
+                                            });
+                                        }))
+                                .catch(err => {
+                                    console.log(err);
+                                    res.status(500).json({
+                                        error: err
+                                    });
+                                });
+                        })
+                }
+            });
     }
-
 };
