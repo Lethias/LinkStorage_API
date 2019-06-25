@@ -21,6 +21,8 @@ router.post("/categories/:categoryId/links", auth, UsersController.newLink);
 
 router.delete("/categories/:categoryId/links/:linkId", auth, UsersController.deleteLink);
 
+router.patch("/categories/:categoryId/links/:linkId", auth, UsersController.editLink);
+
 
 
 

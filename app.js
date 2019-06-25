@@ -16,7 +16,7 @@ const userRouter = require('./api/routes/users');
 
 mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
-mongoose.connect(process.env.PASSWORD,
+mongoose.connect(process.env.CONNECTIONSTRING,
     { useNewUrlParser: true });
 
 // Middleware

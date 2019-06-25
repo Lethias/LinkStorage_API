@@ -213,44 +213,34 @@ module.exports = {
                         message: "Access denied"
                     });
                 } else {
-                    User.findById(userId)
-                        .then(function () {
-                            Category.findById(categoryId)
-                                .then(category => {
-                                    if (!category) {
-                                        return res.status(404).json({
-                                            message: "Category not found"
-                                        });
-                                    }
-                                    console.log(category);
-                                    const link = new Link({
-                                        _id: mongoose.Types.ObjectId(),
-                                        link: req.body.link,
-                                        linkdescription: req.body.linkdescription,
-                                        createdAt: req.body.createdAt,
-                                        tags: req.body.tags,
-                                        category: category._id
-                                    });
-                                    link.save(function (err) {
-                                        if (err) return res.status(404).json({
-                                            message: "Link validation failed"
-                                        });
-                                        else {
-                                            category.links.push(link);
-                                            category.save();
-                                            res.status(201).json({
-                                                message: "Link stored",
-                                                link: link,
-                                            });
-                                        }
-                                    });
-                                })
-                                .catch(err => {
-                                    console.log(err);
-                                    res.status(500).json({
-                                        error: err
-                                    });
+                    Category.findById(categoryId)
+                        .then(category => {
+                            if (!category) {
+                                return res.status(404).json({
+                                    message: "Category not found"
                                 });
+                            }
+                            const link = new Link({
+                                _id: mongoose.Types.ObjectId(),
+                                link: req.body.link,
+                                linkdescription: req.body.linkdescription,
+                                createdAt: req.body.createdAt,
+                                tags: req.body.tags,
+                                category: category._id
+                            });
+                            link.save(function (err) {
+                                if (err) return res.status(404).json({
+                                    message: "Link validation failed"
+                                });
+                                else {
+                                    category.links.push(link);
+                                    category.save();
+                                    res.status(201).json({
+                                        message: "Link stored",
+                                        link: link,
+                                    });
+                                }
+                            });
                         })
                         .catch(err => {
                             console.log(err);
@@ -273,24 +263,62 @@ module.exports = {
                         message: "Access denied"
                     });
                 } else {
-                    User.findById(userId)
-                        .then(function () {
-                            Category.findById(categoryId)
-                                .then(category =>
-                                    Link.deleteOne({_id: linkId})
-                                        .exec()
-                                        .then(result => {
-                                            category.updateOne({$pull: {links: linkId}}, function (err) {
-                                                console.log(err)
-                                            });
-                                            res.status(200).json(result);
-                                        })
-                                        .catch(err => {
-                                            console.log(err);
-                                            res.status(500).json({
-                                                error: err
-                                            });
-                                        }))
+                    Category.findById(categoryId)
+                        .then(category =>
+                            Link.deleteOne({_id: linkId})
+                                .exec()
+                                .then(result => {
+                                    category.updateOne({$pull: {links: linkId}}, function (err) {
+                                        console.log(err)
+                                    });
+                                    res.status(200).json(result);
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                    res.status(500).json({
+                                        error: err
+                                    });
+                                }))
+                        .catch(err => {
+                            console.log(err);
+                            res.status(500).json({
+                                error: err
+                            });
+                        });
+                }
+            });
+    },
+
+    editLink: (req, res) => {
+        const userId = req.userData.userId;
+        const categoryId = req.params.categoryId;
+        const linkId = req.params.linkId;
+        User.find({_id: userId, categories: categoryId})
+            .then(usercheck => {
+                if (usercheck.length < 1) {
+                    return res.status(403).json({
+                        message: "Access denied"
+                    });
+                } else {
+                    Category.findById(categoryId)
+                        .then(category => {
+                            if (!category) {
+                                return res.status(404).json({
+                                    message: "Category not found"
+                                });
+                            }
+                            Link.updateOne({_id: linkId}, {
+                                link: req.body.link,
+                                linkdescription: req.body.linkdescription,
+                                tags: req.body.tags
+                            })
+                                .exec()
+                                .then(result => {
+                                    console.log(result);
+                                    res.status(200).json({
+                                        message: "Link updated"
+                                    });
+                                })
                                 .catch(err => {
                                     console.log(err);
                                     res.status(500).json({
@@ -298,6 +326,12 @@ module.exports = {
                                     });
                                 });
                         })
+                        .catch(err => {
+                            console.log(err);
+                            res.status(500).json({
+                                error: err
+                            });
+                        });
                 }
             });
     }
