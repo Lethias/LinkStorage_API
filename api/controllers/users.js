@@ -309,8 +309,7 @@ module.exports = {
                             }
                             Link.updateOne({_id: linkId}, {
                                 link: req.body.link,
-                                linkdescription: req.body.linkdescription,
-                                tags: req.body.tags
+                                linkdescription: req.body.linkdescription
                             })
                                 .exec()
                                 .then(result => {
