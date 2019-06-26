@@ -5,7 +5,7 @@ const UsersController = require('../controllers/users');
 const auth = require('../helpers/auth');
 
 
-router.post('/register', UsersController.registerUser);
+router.post("/register", UsersController.registerUser);
 
 router.post("/login", UsersController.loginUser);
 
