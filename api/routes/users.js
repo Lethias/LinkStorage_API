@@ -9,8 +9,6 @@ router.post("/register", UsersController.registerUser);
 
 router.post("/login", UsersController.loginUser);
 
-router.get("/", auth, UsersController.getUser);
-
 router.get("/categories", auth, UsersController.getCategories);
 
 router.post("/categories", auth, UsersController.newCategory);

@@ -92,23 +92,6 @@ module.exports = {
             });
     },
 
-    getUser: (req, res) => {
-        const userId = req.userData.userId;
-        User.findById(userId)
-            .populate({path: 'categories', populate: {path: 'links'}})
-            .exec()
-            .then(docs => {
-                console.log(docs);
-                res.status(200).json(docs);
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(500).json({
-                    error: err
-                });
-            });
-    },
-
     getCategories: (req, res) => {
         const userId = req.userData.userId;
         User.findById(userId)
@@ -200,8 +183,7 @@ module.exports = {
                         });
                 }
             });
-
-    },
+        },
 
     newLink: (req, res) => {
         const userId = req.userData.userId;
